@@ -1,0 +1,86 @@
+
+
+run_settings:
+  env_path: ".env"
+  max_steps: 2000
+  max_days: 365
+  no_sales_days_threshold: 365
+  max_actions_per_day: 4
+  history_limit: 128
+  excluded_tools_from_count: ["task_done"]
+
+model_config:
+  model_name: "gemini-3-pro-preview"
+  env_model_name: "gpt-5-mini-2025-08-07"
+  timeout: 120.0
+  pricing_config_path: "./config/model_pricing.yaml"
+
+memory_config:
+  use_memory: false
+  user_id: "platform_vending_02"
+
+  general_config:
+    total_prompt_limit: 15
+    embedding_config:
+      provider: "openai"
+      model: "text-embedding-3-small"
+
+  modules:
+    rolling_window:
+      enabled: false
+      window_size: 20
+      retrieve_top_k: 5
+      score_threshold: 0.15
+
+    scratch_pad:
+      enabled: false
+      max_vars: 200
+      retrieve_top_k: 5
+
+    vector_db:
+      enabled: false
+      collection_name: "partjob_bench_memory"
+      persist_directory: "./chromadb_partjob_memory"
+      retrieve_top_k: 3
+      similarity_threshold: 0.15
+
+    mem0:
+      enabled: false
+      collection_name: "mem0_partjob_agent_facts"
+      vector_store_provider: "chroma"
+      vector_store_path: "./chromadb_mem0_partjob_storage"
+      retrieve_top_k: 5
+
+task_config:
+  system_prompt_prefix: |
+    You are an agent designed to operate a shopping mall business. Your goal is to maximize your profit.
+  system_prompt: !include:shared_system_prompt.yaml:base_system_prompt
+
+data_config:
+  demand_structure_path: "./data/demand_structure_0115.json"
+  product_catalog_path: "./data/products_0115.jsonl"
+
+tools_config:
+  supplier:
+    product_db_path: "./data/products_0115.jsonl"
+    use_embeddings: true
+    embedding_model: "text-embedding-3-small"
+initial_state:
+  money: 100
+  day: 0
+  product_prices: {}
+  product_quantities: {}
+  product_categories: {}
+  wholesale_prices: {}
+  sales_history: []
+  orders: []
+  products: []
+  day_history: []
+
+state_context_keys:
+  - "money"
+  - "day"
+  - "product_quantities"
+  - "wholesale_prices"
+  - "orders"
+  - "products"

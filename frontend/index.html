@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Operation Bench - Quick Start</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+        }
+
+        .status {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .status.checking {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .steps {
+            margin: 30px 0;
+        }
+
+        .step {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .step-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .step-content {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            text-decoration: none;
+            text-align: center;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .tip {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            color: #004085;
+            border-left: 4px solid #004085;
+        }
+
+        .tip strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Platform Operation Bench</h1>
+        <p class="subtitle">Human study interface for collecting human-operator trajectories (performance baseline)</p>
+
+        <div id="status" class="status checking">
+            ⏳ Checking backend service status...
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Start Backend Service
+                </div>
+                <div class="step-content">
+                    Run the following command in your terminal to start the backend service:
+                    <div class="code">cd frontend<br>python3 operation_server.py</div>
+                    Or use the helper script:
+                    <div class="code">./start_operation_bench.sh<br><br>start_operation_bench.bat</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Confirm Service Running
+                </div>
+                <div class="step-content">
+                    Make sure you see output similar to the following:
+                    <div class="code">Platform Operation Bench — human study server<br>Listening on http://localhost:5001<br>Open http://localhost:5001/ or operation_bench.html after the server is running.</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Open study interface
+                </div>
+                <div class="step-content">
+                    After the server responds on the health check, open the web interface (served from the same process on port 5001, or open operation_bench.html while the server is running).
+                </div>
+            </div>
+        </div>
+
+        <button id="playBtn" class="btn" onclick="checkAndOpenBench()" disabled>
+            Open study interface
+        </button>
+
+        <div class="tip">
+            <strong>Task summary:</strong>
+            As a platform operator, you need to maximize DAU (Daily Active Users) within 365 days while balancing content quality, creator ecosystem, and user retention.
+            You can execute 1 operation action per day, then observe the natural evolution of the platform.
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5001';
+        let isServerOnline = false;
+
+        async function checkServer() {
+            const statusDiv = document.getElementById('status');
+            const playBtn = document.getElementById('playBtn');
+
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    statusDiv.className = 'status online';
+                    statusDiv.textContent = 'Backend reachable — you can open the study interface.';
+                    playBtn.disabled = false;
+                    isServerOnline = true;
+                } else {
+                    throw new Error('Server returned error');
+                }
+            } catch (error) {
+                statusDiv.className = 'status offline';
+                statusDiv.innerHTML = '❌ Backend service not running<br>Please run <code>python3 operation_server.py</code> in your terminal first';
+                playBtn.disabled = true;
+                isServerOnline = false;
+            }
+        }
+
+        function checkAndOpenBench() {
+            if (isServerOnline) {
+                window.location.href = 'operation_bench.html';
+            } else {
+                alert('Please start the backend service first!');
+            }
+        }
+
+
+        checkServer();
+
+
+        setInterval(checkServer, 3000);
+    </script>
+</body>
+</html>
+

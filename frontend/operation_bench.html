@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Operation Bench</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel h2 {
+            font-size: 1.2em;
+            margin-bottom: 12px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 6px;
+        }
+
+        .metric {
+            margin-bottom: 12px;
+        }
+
+        .metric-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .metric-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+
+        .metric-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .action-btn.acquisition {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .action-btn.engagement {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .action-btn.creator {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .action-btn.moderation {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .action-btn-title {
+            font-size: 1em;
+            margin-bottom: 3px;
+        }
+
+        .action-btn-desc {
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+
+        .end-day-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+
+        .end-day-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .end-day-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .chart-container {
+            height: 250px;
+            position: relative;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background: #43e97b;
+        }
+
+        .message.error {
+            background: #f5576c;
+        }
+
+        .message.info {
+            background: #667eea;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .action-count {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        .action-count strong {
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #f5576c;
+            border-radius: 8px;
+            background: white;
+            color: #f5576c;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #f5576c;
+            color: white;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-panel {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .modal-overlay h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .run-summary-stats {
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .run-summary-stat {
+            margin: 15px 0;
+            font-size: 1.2em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .session-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .session-item:hover {
+            background: #e9ecef;
+        }
+
+        .session-header {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .session-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .session-reason {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .session-reason.max_days {
+            background: #43e97b;
+            color: white;
+        }
+
+        .session-reason.dau_collapse {
+            background: #f5576c;
+            color: white;
+        }
+
+        .session-reason.abandoned {
+            background: #ffa726;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Platform Operation Bench</h1>
+            <p>Objective: maximize DAU (Daily Active Users) while balancing short-term growth and long-term ecosystem health</p>
+            <p id="currentUser" style="margin-top: 10px; font-size: 0.9em; opacity: 0.85;">
+                👤 Participant ID: <strong id="userIdDisplay">Not set</strong>
+            </p>
+        </div>
+
+        <div class="dashboard-layout">
+
+            <div class="panel">
+                <h2>📊 Current State</h2>
+
+                <div class="metric">
+                    <div class="metric-label">Day <strong id="day">0</strong></div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-label">Daily Active Users (DAU)</div>
+                    <div class="metric-value" id="dau">1000</div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-label">Content Volume</div>
+                    <div class="metric-value" id="content">100</div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-label">Content Quality</div>
+                    <div class="metric-value" id="quality">50%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" id="quality-bar" style="width: 50%"></div>
+                    </div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-label">Creator Activity</div>
+                    <div class="metric-value" id="creator">50%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" id="creator-bar" style="width: 50%"></div>
+                    </div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-label">Engagement Level</div>
+                    <div class="metric-value" id="engagement">0%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" id="engagement-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+                <div class="action-count">
+                    Actions taken today: <strong id="action-count">0</strong>/1
+                </div>
+
+                <div class="actions">
+                    <button class="action-btn acquisition" onclick="executeAction('acquisition_boost')">
+                        <div class="action-btn-title">📢 Acquisition</div>
+                        <div class="action-btn-desc">Run ads to acquire new users</div>
+                    </button>
+
+                    <button class="action-btn engagement" onclick="executeAction('engagement_tune')">
+                        <div class="action-btn-title">🎯 Algorithm Tuning</div>
+                        <div class="action-btn-desc">Boost retention but reduce quality</div>
+                    </button>
+
+                    <button class="action-btn creator" onclick="executeAction('creator_incentive')">
+                        <div class="action-btn-title">💰 Creator Incentive</div>
+                        <div class="action-btn-desc">Increase content and activity</div>
+                    </button>
+
+                    <button class="action-btn moderation" onclick="executeAction('moderation_tighten')">
+                        <div class="action-btn-title">🛡️ Moderation</div>
+                        <div class="action-btn-desc">Improve quality but remove content</div>
+                    </button>
+                </div>
+
+                <button class="end-day-btn" onclick="endDay()">⏭️ End Day and Proceed</button>
+
+                <button class="reset-btn" onclick="resetBenchmarkRun()">New evaluation run</button>
+
+                <button class="reset-btn" onclick="switchUser()" style="background: #667eea; color: white; border: none;">
+                    👤 Switch participant
+                </button>
+            </div>
+
+
+            <div class="panel">
+                <h2>📈 DAU Trend</h2>
+                <div class="chart-container">
+                    <canvas id="dauChart"></canvas>
+                </div>
+            </div>
+
+
+            <div class="panel">
+                <h2>📊 Ecosystem Metrics</h2>
+                <div class="chart-container">
+                    <canvas id="metricsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="panel" id="sessionHistoryPanel" style="display: none;">
+            <h2>Recorded runs</h2>
+            <div id="sessionHistoryContent" style="max-height: 300px; overflow-y: auto;">
+                <p style="color: #999; text-align: center; padding: 20px;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="userIdModal" class="modal-overlay">
+        <div class="modal-panel">
+            <h2>Participant ID</h2>
+            <p style="margin: 20px 0; color: #666;">Enter a participant identifier to label saved trajectories (may be anonymous for local testing).</p>
+            <input type="text" id="userIdInput" placeholder="Participant ID"
+                   onkeypress="if(event.key==='Enter') beginRunWithParticipantId()"
+                   style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 8px; font-size: 1em; margin-bottom: 20px;">
+            <button class="end-day-btn" onclick="beginRunWithParticipantId()">Begin run</button>
+        </div>
+    </div>
+
+    <div id="runCompleteModal" class="modal-overlay hidden">
+        <div class="modal-panel">
+            <h2 id="runCompleteTitle">Run complete</h2>
+            <div id="saveStatus" style="margin: 15px 0; padding: 10px; background: #43e97b; color: white; border-radius: 5px; display: none;">
+                Run log saved
+            </div>
+            <div class="run-summary-stats">
+                <div class="run-summary-stat">📅 Days elapsed: <strong id="finalDay">0</strong></div>
+                <div class="run-summary-stat">👥 Final DAU: <strong id="finalDAU">0</strong></div>
+                <div class="run-summary-stat">📈 Peak DAU: <strong id="maxDAU">0</strong></div>
+                <div class="run-summary-stat">📊 Average DAU: <strong id="avgDAU">0</strong></div>
+            </div>
+            <button class="end-day-btn" onclick="resetBenchmarkRun()">Start another run</button>
+            <button class="reset-btn" onclick="switchUser()" style="margin-top: 10px;">Switch participant</button>
+        </div>
+    </div>
+
+    <script>
+
+        let benchmarkState = null;
+        let actionCount = 0;
+        let dauChart = null;
+        let metricsChart = null;
+        let userId = null;
+        let runStartTime = null;
+
+
+        const API_BASE = `${window.location.protocol}//${window.location.host}`;
+
+
+        function beginRunWithParticipantId() {
+            const input = document.getElementById('userIdInput');
+            const inputUserId = input.value.trim();
+
+            if (!inputUserId) {
+                alert('Please enter a participant ID');
+                return;
+            }
+
+            userId = inputUserId;
+            runStartTime = new Date().toISOString();
+
+
+            document.getElementById('userIdDisplay').textContent = userId;
+
+
+            loadSessionHistory();
+
+            document.getElementById('userIdModal').classList.add('hidden');
+            initBenchmark();
+        }
+
+
+        async function loadSessionHistory() {
+            if (!userId) {
+                document.getElementById('sessionHistoryPanel').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/user_sessions/${userId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    displaySessionHistory(data.sessions);
+                }
+            } catch (error) {
+                console.error('Failed to load session history:', error);
+            }
+        }
+
+
+        function displaySessionHistory(sessions) {
+            const panel = document.getElementById('sessionHistoryPanel');
+            const content = document.getElementById('sessionHistoryContent');
+
+            if (sessions.length === 0) {
+                content.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No recorded runs yet</p>';
+                panel.style.display = 'block';
+                return;
+            }
+
+            let html = '';
+            sessions.forEach((session, index) => {
+                const startTime = new Date(session.run_start_time);
+                const endTime = new Date(session.run_end_time);
+                const duration = Math.round((endTime - startTime) / 1000 / 60);
+
+                let reasonText, reasonClass;
+                if (session.reason === 'max_days') {
+                    reasonText = 'Completed';
+                    reasonClass = 'max_days';
+                } else if (session.reason === 'dau_collapse') {
+                    reasonText = 'DAU terminated';
+                    reasonClass = 'dau_collapse';
+                } else if (session.reason === 'abandoned') {
+                    reasonText = 'Incomplete reset';
+                    reasonClass = 'abandoned';
+                } else {
+                    reasonText = '❓ Unknown';
+                    reasonClass = 'abandoned';
+                }
+
+                html += `
+                    <div class="session-item">
+                        <div class="session-header">
+                            ${session.session_id || `Run #${sessions.length - index}`}
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                            ${startTime.toLocaleString('en-US')}
+                        </div>
+                        <div class="session-stats">
+                            <div>📅 Days: ${session.final_day}</div>
+                            <div>👥 Final DAU: ${session.final_dau}</div>
+                            <div>📈 Peak DAU: ${session.max_dau}</div>
+                            <div>⏱️ Duration: ${duration} min</div>
+                        </div>
+                        <span class="session-reason ${reasonClass}">${reasonText}</span>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = html;
+            panel.style.display = 'block';
+        }
+
+
+        async function initBenchmark() {
+            try {
+                const response = await fetch(`${API_BASE}/api/init`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const data = await response.json();
+                benchmarkState = data.state;
+                actionCount = 0;
+                updateUI();
+                initCharts();
+                showMessage('Run initialized.', 'success');
+            } catch (error) {
+                console.error('Failed to initialize run:', error);
+                showMessage('Initialization failed, please ensure backend server is running', 'error');
+            }
+        }
+
+
+        async function executeAction(actionName) {
+            if (actionCount >= 1) {
+                showMessage('Action already taken today, please end the day first', 'info');
+                return;
+            }
+
+            disableButtons();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: actionName })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    benchmarkState = data.state;
+                    actionCount++;
+                    updateUI();
+
+                    const actionNames = {
+                        'acquisition_boost': 'Acquisition',
+                        'engagement_tune': 'Algorithm Tuning',
+                        'creator_incentive': 'Creator Incentive',
+                        'moderation_tighten': 'Moderation'
+                    };
+                    showMessage(`Executed ${actionNames[actionName]}`, 'success');
+
+
+                    setTimeout(() => {
+                        endDay();
+                    }, 800);
+                } else {
+                    showMessage(data.message || 'Action failed', 'error');
+                    enableButtons();
+                }
+            } catch (error) {
+                console.error('Action failed:', error);
+                showMessage('Action failed', 'error');
+                enableButtons();
+            }
+        }
+
+
+        async function endDay() {
+            disableButtons();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/end_day`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    benchmarkState = data.state;
+                    actionCount = 0;
+                    updateUI();
+                    updateCharts();
+
+                    const change = data.day_result.dau_change;
+                    const changeText = change >= 0 ? `+${change}` : `${change}`;
+                    showMessage(`New day! DAU change: ${changeText}`, 'info');
+
+                    if (data.run_terminated) {
+                        setTimeout(() => showRunComplete(data.reason), 500);
+                    }
+                } else {
+                    showMessage(data.message || 'Operation failed', 'error');
+                }
+            } catch (error) {
+                console.error('End day failed:', error);
+                showMessage('Operation failed', 'error');
+            } finally {
+                enableButtons();
+            }
+        }
+
+
+        async function resetBenchmarkRun() {
+
+            document.getElementById('runCompleteModal').classList.add('hidden');
+            document.getElementById('saveStatus').style.display = 'none';
+
+
+            if (benchmarkState && benchmarkState.day > 0 && userId) {
+                const history = benchmarkState.dau_history || [];
+                const maxDAU = history.length > 0
+                    ? Math.max(...history.map(h => h.dau), benchmarkState.dau)
+                    : benchmarkState.dau;
+                const avgDAU = history.length > 0
+                    ? Math.round(history.reduce((sum, h) => sum + h.dau, 0) / history.length)
+                    : benchmarkState.dau;
+
+
+                await saveRunRecord('abandoned', benchmarkState.day, benchmarkState.dau, maxDAU, avgDAU);
+            }
+
+
+            benchmarkState = null;
+            runStartTime = new Date().toISOString();
+            actionCount = 0;
+
+
+            if (dauChart) {
+                dauChart.destroy();
+                dauChart = null;
+            }
+            if (metricsChart) {
+                metricsChart.destroy();
+                metricsChart = null;
+            }
+
+
+            if (userId) {
+                initBenchmark();
+            } else {
+
+                const input = document.getElementById('userIdInput');
+                input.value = '';
+                document.getElementById('userIdModal').classList.remove('hidden');
+                setTimeout(() => {
+                    input.focus();
+                }, 100);
+            }
+        }
+
+
+        function switchUser() {
+
+            if (!confirm('Switch participant? The current run will be discarded without saving.')) {
+                return;
+            }
+
+
+            document.getElementById('runCompleteModal').classList.add('hidden');
+            document.getElementById('saveStatus').style.display = 'none';
+
+
+            document.getElementById('sessionHistoryPanel').style.display = 'none';
+
+
+            benchmarkState = null;
+            userId = null;
+            runStartTime = null;
+            actionCount = 0;
+
+
+            if (dauChart) {
+                dauChart.destroy();
+                dauChart = null;
+            }
+            if (metricsChart) {
+                metricsChart.destroy();
+                metricsChart = null;
+            }
+
+
+            document.getElementById('userIdDisplay').textContent = 'Not set';
+
+
+            const input = document.getElementById('userIdInput');
+            input.value = '';
+            document.getElementById('userIdModal').classList.remove('hidden');
+            setTimeout(() => {
+                input.focus();
+            }, 100);
+        }
+
+
+        function updateUI() {
+            if (!benchmarkState) return;
+
+            document.getElementById('day').textContent = benchmarkState.day;
+            document.getElementById('dau').textContent = benchmarkState.dau;
+            document.getElementById('content').textContent = benchmarkState.content_volume;
+
+            const qualityPercent = Math.round(benchmarkState.content_quality * 100);
+            document.getElementById('quality').textContent = qualityPercent + '%';
+            document.getElementById('quality-bar').style.width = qualityPercent + '%';
+
+            const creatorPercent = Math.round(benchmarkState.creator_activity * 100);
+            document.getElementById('creator').textContent = creatorPercent + '%';
+            document.getElementById('creator-bar').style.width = creatorPercent + '%';
+
+            const engagementPercent = Math.round(benchmarkState.engagement_level * 100);
+            document.getElementById('engagement').textContent = engagementPercent + '%';
+            document.getElementById('engagement-bar').style.width = engagementPercent + '%';
+
+            document.getElementById('action-count').textContent = actionCount;
+
+
+            const actionButtons = document.querySelectorAll('.action-btn');
+            actionButtons.forEach(btn => {
+                btn.disabled = actionCount >= 1;
+            });
+        }
+
+
+        function initCharts() {
+
+            if (dauChart) {
+                dauChart.destroy();
+            }
+            if (metricsChart) {
+                metricsChart.destroy();
+            }
+
+            const dauCtx = document.getElementById('dauChart').getContext('2d');
+            dauChart = new Chart(dauCtx, {
+                type: 'line',
+                data: {
+                    labels: [0],
+                    datasets: [{
+                        label: 'DAU',
+                        data: [benchmarkState.dau],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'DAU Trend',
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const metricsCtx = document.getElementById('metricsChart').getContext('2d');
+            metricsChart = new Chart(metricsCtx, {
+                type: 'line',
+                data: {
+                    labels: [0],
+                    datasets: [
+                        {
+                            label: 'Content Quality',
+                            data: [benchmarkState.content_quality],
+                            borderColor: '#43e97b',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Creator Activity',
+                            data: [benchmarkState.creator_activity],
+                            borderColor: '#4facfe',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Engagement',
+                            data: [benchmarkState.engagement_level],
+                            borderColor: '#f5576c',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Ecosystem Metrics (0-1)',
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1
+                        }
+                    }
+                }
+            });
+        }
+
+
+        function updateCharts() {
+            if (!benchmarkState || !dauChart || !metricsChart) return;
+
+
+            dauChart.data.labels.push(benchmarkState.day);
+            dauChart.data.datasets[0].data.push(benchmarkState.dau);
+            dauChart.update();
+
+
+            metricsChart.data.labels.push(benchmarkState.day);
+            metricsChart.data.datasets[0].data.push(benchmarkState.content_quality);
+            metricsChart.data.datasets[1].data.push(benchmarkState.creator_activity);
+            metricsChart.data.datasets[2].data.push(benchmarkState.engagement_level);
+            metricsChart.update();
+        }
+
+
+        function showMessage(text, type = 'info') {
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => message.remove(), 300);
+            }, 2000);
+        }
+
+
+        async function showRunComplete(reason) {
+            const modal = document.getElementById('runCompleteModal');
+            const title = document.getElementById('runCompleteTitle');
+
+            if (reason === 'max_days') {
+                title.textContent = 'Planning horizon reached';
+            } else if (reason === 'dau_collapse') {
+                title.textContent = 'Terminated: DAU below threshold';
+            }
+
+            document.getElementById('finalDay').textContent = benchmarkState.day;
+            document.getElementById('finalDAU').textContent = benchmarkState.dau;
+
+            const history = benchmarkState.dau_history || [];
+            const maxDAU = Math.max(...history.map(h => h.dau), benchmarkState.dau);
+            const avgDAU = history.length > 0
+                ? Math.round(history.reduce((sum, h) => sum + h.dau, 0) / history.length)
+                : benchmarkState.dau;
+
+            document.getElementById('maxDAU').textContent = maxDAU;
+            document.getElementById('avgDAU').textContent = avgDAU;
+
+
+            await saveRunRecord(reason, benchmarkState.day, benchmarkState.dau, maxDAU, avgDAU);
+
+            modal.classList.remove('hidden');
+        }
+
+
+        async function saveRunRecord(reason, finalDay, finalDAU, maxDAU, avgDAU) {
+            try {
+                const response = await fetch(`${API_BASE}/api/save_session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        run_start_time: runStartTime,
+                        run_end_time: new Date().toISOString(),
+                        reason: reason,
+                        final_day: finalDay,
+                        final_dau: finalDAU,
+                        max_dau: maxDAU,
+                        avg_dau: avgDAU,
+                        state_snapshot: benchmarkState
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('saveStatus').style.display = 'block';
+                    console.log('Run log saved:', data.file_path);
+
+
+                    loadSessionHistory();
+                } else {
+                    console.error('Failed to save session:', data.message);
+                }
+            } catch (error) {
+                console.error('Error saving session:', error);
+            }
+        }
+
+
+        function disableButtons() {
+            document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        }
+
+        function enableButtons() {
+            document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+
+            if (actionCount >= 1) {
+                document.querySelectorAll('.action-btn').forEach(btn => btn.disabled = true);
+            }
+        }
+
+
+
+        window.onload = function() {
+
+            if (!userId) {
+                const modal = document.getElementById('userIdModal');
+                modal.classList.remove('hidden');
+
+                setTimeout(() => {
+                    document.getElementById('userIdInput').focus();
+                }, 100);
+            }
+        };
+    </script>
+</body>
+</html>
+

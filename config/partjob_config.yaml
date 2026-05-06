@@ -1,9 +1,9 @@
 
 
 model_config:
-  model_name: &main_model "gpt-5-mini"
+  model_name: &main_model "gpt-5-mini-2025-08-07"
   timeout: 120.0
-  env_model_name: "gpt-5-mini"
+  env_model_name: "gpt-5-mini-2025-08-07"
   pricing_config_path: "./config/model_pricing.yaml"
 
 run_settings:
@@ -55,8 +55,8 @@ memory_config:
 system_config:
   max_retries: 3
   defaults:
-    initial_voting_models: ["qwen-flash", "gpt-5-mini", "deepseek-v3", "gemini-2.5-flash"]
-    system_model: "gpt-5-mini"
+    initial_voting_models: ["qwen-flash", "gpt-5-mini-2025-08-07", "deepseek-v3", "gemini-2.5-flash"]
+    system_model: "gpt-5-mini-2025-08-07"
     agent_model: *main_model
 
 initial_state:
@@ -106,7 +106,7 @@ effort_calculation_config:
 
 task_config:
   system_prompt_prefix: |
-    You are an agent designed to operate a gig economy simulation. Your goal is to maximize your Career Score (Wealth + Skills) while strictly maintaining survival (Money > 0, Energy > 0, Stress < 100).
+    You are an agent designed to operate in a gig economy environment. Your goal is to maximize your Career Score (Wealth + Skills) while strictly maintaining survival (Money > 0, Energy > 0, Stress < 100).
   system_prompt: !include:shared_system_prompt.yaml:base_system_prompt
 
 initial_pricing_config:

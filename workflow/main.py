@@ -445,9 +445,9 @@ class BenchmarkLauncher(object):
     def run(self, max_steps: int = 10) -> Dict[str, Any]:
         self.logger.info("=" * 60)
         if self.is_resuming:
-            self.logger.info(f"Resuming simulation - continuing from Step {self.resumed_from_step + 1}")
+            self.logger.info(f"Resuming run - continuing from Step {self.resumed_from_step + 1}")
         else:
-            self.logger.info("Starting simulation")
+            self.logger.info("Starting run")
         self.logger.info("=" * 60)
 
         if self.is_partjob and not self.is_resuming:
@@ -464,7 +464,7 @@ class BenchmarkLauncher(object):
         for step in range(start_step, max_steps):
             full_state = self.get_full_state()
             if self.is_finished(full_state):
-                self.logger.info("Simulation stopped (termination condition met)")
+                self.logger.info("Run stopped (termination condition met)")
                 self.session_manager.mark_completed()
                 break
 
@@ -844,7 +844,7 @@ class BenchmarkLauncher(object):
                 self.logger.debug(f"Step {step + 1} result: {result}")
 
                 if result.status == RunStatus.cancelled:
-                    self.logger.warning("Simulation interrupted by user (Ctrl+C)")
+                    self.logger.warning("Run interrupted by user (Ctrl+C)")
                     self.session_manager.mark_interrupted()
                     break
 
@@ -1065,7 +1065,7 @@ def load_benchmark_specific_modules(benchmark_type: str, config: Dict[str, Any],
 
         logger.info(f"Termination condition - No sales days threshold: {no_sales_days_threshold} days")
         if max_days:
-            logger.info(f"Max simulation days: {max_days}")
+            logger.info(f"Max run days: {max_days}")
 
         is_finished_func = partial(
             vending_bench_is_finished,
@@ -1081,7 +1081,7 @@ def load_benchmark_specific_modules(benchmark_type: str, config: Dict[str, Any],
         }
 
     elif benchmark_type == "operation_bench":
-        from agno.tools.platform_operator import PlatformOperatorTools, simulate_platform_day
+        from agno.tools.platform_operator import PlatformOperatorTools, advance_platform_day
         from agno.tools.timer import TimerTools
         from operation_bench_utils import operation_bench_is_finished, operation_bench_cal_metric
 
@@ -1101,7 +1101,7 @@ def load_benchmark_specific_modules(benchmark_type: str, config: Dict[str, Any],
 
                 current_day = int(session_state["day"])
 
-                day_result = simulate_platform_day(session_state)
+                day_result = advance_platform_day(session_state)
 
                 new_day = current_day + 1
                 session_state["day"] = new_day
@@ -1295,7 +1295,7 @@ def apply_config_overrides(config: Dict[str, Any], overrides: List[str], logger:
 
 
 def load_params() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run a universal benchmark simulation.")
+    parser = argparse.ArgumentParser(description="Run a universal benchmark workflow.")
     parser.add_argument("--benchmark_type", "-b", type=str, required=True, choices=["vending", "partjob", "operation", "v", "p", "o"],
                        help="Benchmark type: vending, partjob, or operation.")
     parser.add_argument("--config_path", type=str, default="./config/", help="Path to the configuration directory (default: ./config/).")

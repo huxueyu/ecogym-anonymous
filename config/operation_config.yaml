@@ -11,7 +11,7 @@ run_settings:
 
 model_config:
   model_name: "gemini-3-pro-preview"
-  env_model_name: "gpt-5-mini"
+  env_model_name: "gpt-5-mini-2025-08-07"
   timeout: 120.0
   pricing_config_path: "./config/model_pricing.yaml"
 

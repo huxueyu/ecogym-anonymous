@@ -80,7 +80,7 @@ def calculate_natural_growth(content_quality, creator_activity, session_state):
     return base_growth + quality_bonus + creator_bonus
 
 
-def simulate_platform_day(session_state):
+def advance_platform_day(session_state):
 
     dau = session_state.get("dau", 1000)
     content_volume = session_state.get("content_volume", 100)
@@ -402,7 +402,7 @@ def end_day():
         return jsonify({'success': False, 'message': 'Benchmark session not initialized'}), 400
 
     try:
-        day_result = simulate_platform_day(bench_state)
+        day_result = advance_platform_day(bench_state)
 
         bench_state['day'] += 1
 

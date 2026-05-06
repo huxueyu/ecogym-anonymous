@@ -344,8 +344,8 @@ class PlatformOperatorTools(Toolkit):
 
 # ==================== System Dynamics Core Functions ====================
 
-def simulate_platform_day(session_state: Dict[str, Any]) -> Dict[str, Any]:
-    """Simulate one day of platform dynamics evolution
+def advance_platform_day(session_state: Dict[str, Any]) -> Dict[str, Any]:
+    """Advance platform dynamics by one day
     
     Core Logic:
     1. Calculate retention rate (based on content, quality, algorithm)

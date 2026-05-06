@@ -4,7 +4,7 @@ from __future__ import annotations
 Sales (Demand) Module
 ---------------------
 
-This module simulates customer demand and provides pricing recommendations for a
+This module models customer demand and provides pricing recommendations for a
 retail business environment. The current design focuses on:
 
 - Group-based demand using an external demand_structure.json
@@ -16,7 +16,7 @@ retail business environment. The current design focuses on:
 Public interface (see `SalesModel` and `SalesTools`):
 - get_price(session_state, product_name)
 - set_price(session_state, product_name, price)
-- simulate_day(session_state)  -> updates inventory, money, sales_history
+- advance_day(session_state)  -> updates inventory, money, sales_history
 - (internal helpers) recommend_price / recommend_prices for analysis or tooling
 """
 
@@ -93,7 +93,7 @@ class DemandConfig:
         - `recommend_price` / `recommend_prices`
         - `update_demand_params` (EMA on b_base / eps)
 
-        The main environment demand (used by `simulate_day`) is fully driven by
+        The main environment demand (used by `advance_day`) is fully driven by
         the group-based model and demand_structure.json, and does NOT depend
         on these fields.
     """
@@ -133,7 +133,7 @@ class DemandConfig:
 
 
 class SalesModel:
-    """Group-based demand simulator + pricing recommendation engine.
+    """Group-based demand model + pricing recommendation engine.
 
     The primary demand model is group-based and driven by an external
     demand_structure.json plus the offline products catalog:
@@ -229,13 +229,13 @@ class SalesModel:
             )
         return result
 
-    def simulate_day(
+    def advance_day(
         self,
         machine_state: MachineState,
         day_info: DayInfo,
         session_state: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, int]:
-        """Simulate sales for each product using the group-based demand model."""
+        """Process one day of sales using the group-based demand model."""
         t: Optional[int] = None
         if session_state is not None:
             try:
@@ -243,14 +243,14 @@ class SalesModel:
             except Exception:
                 t = None
 
-        return self._simulate_day_group_based(machine_state, day_info, t=t, session_state=session_state)
+        return self._advance_day_group_based(machine_state, day_info, t=t, session_state=session_state)
 
     def update_demand_params(self, obs: SalesObservation) -> None:
         """Lightweight EMA update on b_base; optional safeguarded tweak on eps.
 
         This updater belongs to the legacy per-product demand model and is used
         only to refine parameters consumed by `recommend_price` /
-        `recommend_prices`. The group-based demand model (used in `simulate_day`)
+        `recommend_prices`. The group-based demand model (used in `advance_day`)
         does not depend on these updates.
         """
         params = self._ensure_params(obs.product_name)
@@ -512,7 +512,7 @@ class SalesModel:
                         adjusted[g2] *= factor
         return adjusted
 
-    def _simulate_day_group_based(
+    def _advance_day_group_based(
         self,
         machine_state: MachineState,
         day_info: DayInfo,
@@ -867,7 +867,7 @@ class SalesTools(Toolkit):
         
         Note:
             This does NOT affect the main group-based demand model used by
-            `simulate_day`. It is intended for analysis or offline experiments
+            `advance_day`. It is intended for analysis or offline experiments
             around price recommendation only.
         """
         p = self.sales.get_demand_params(product_name)
@@ -966,8 +966,8 @@ class SalesTools(Toolkit):
             day_info=di,
         )
 
-    def simulate_day(self, session_state: Dict[str, Any]) -> str:
-        """Simulate daily sales and update inventory, money, and sales history.
+    def advance_day(self, session_state: Dict[str, Any]) -> str:
+        """Process daily sales and update inventory, money, and sales history.
         
         Returns:
             A JSON string with sales results:
@@ -995,7 +995,7 @@ class SalesTools(Toolkit):
             location_factor=1.0,
         )
         
-        sold = self.sales.simulate_day(ms, di, session_state=session_state)
+        sold = self.sales.advance_day(ms, di, session_state=session_state)
         
         revenue = 0.0
         for product_name, qty_sold in sold.items():

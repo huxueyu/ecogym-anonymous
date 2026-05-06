@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 class TimerTools(Toolkit):
     """
-    A simple toolkit to control simulated time in the Agent session state.
+    A simple toolkit to control day progression in the Agent session state.
 
     - task_done(): Signal that all actions for the current day are complete,
       which will advance to the next day and automatically process all time-based events.
@@ -39,7 +39,7 @@ class TimerTools(Toolkit):
         )
 
     def task_done(self, session_state: Dict[str, Any]) -> str:
-        """Complete current day operations, simulate daily events, and advance to next day.
+        """Complete current day operations, process daily events, and advance to next day.
         
         Returns:
             A JSON string with day transition summary:
@@ -78,7 +78,7 @@ class TimerTools(Toolkit):
         
         if self.sales_tools is not None:
             try:
-                sold_json = self.sales_tools.simulate_day(session_state)
+                sold_json = self.sales_tools.advance_day(session_state)
                 sold = json.loads(sold_json) if isinstance(sold_json, str) else sold_json
                 total_sold = sum(sold.values())
                 if total_sold > 0:
@@ -92,7 +92,7 @@ class TimerTools(Toolkit):
                         "details": sold
                     }
             except Exception as e:
-                events["errors"].append(f"Sales simulation failed: {str(e)}")
+                events["errors"].append(f"Sales processing failed: {str(e)}")
 
         new_day = current_day + 1
         session_state["day"] = new_day

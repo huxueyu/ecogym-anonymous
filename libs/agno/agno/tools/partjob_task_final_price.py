@@ -18,7 +18,7 @@ class TaskSettlementTools(Toolkit):
 
     Key Features:
     1. Effort Analysis: Calculates the actual effort cost based on the length of the agent's execution trajectory.
-    2. Automated Negotiation: Simulates a negotiation process between the worker and the system to determine the final payment.
+    2. Automated Negotiation: Runs a negotiation process between the worker and the system to determine the final payment.
     3. Failure Handling: Enforces zero payment policies for failed tasks.
     """
     def __init__(self, config_path: str = "./partjob_bench_config.yaml", api_key: Optional[str] = None, api_url: Optional[str] = None, add_instructions: bool = True, **kwargs: Any):

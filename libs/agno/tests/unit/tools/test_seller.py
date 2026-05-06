@@ -116,13 +116,13 @@ def test_get_demand_params(sales_tools, session_state):
     assert params["eps"] < 0  # elasticity should be negative
 
 
-def test_simulate_day(sales_tools, session_state):
+def test_advance_day(sales_tools, session_state):
     """Test daily sales simulation with session_state updates."""
     initial_money = session_state["money"]
     initial_qty_cola = session_state["qty_by_sku"]["cola"]
     initial_qty_chips = session_state["qty_by_sku"]["chips"]
     
-    sold = sales_tools.simulate_day(session_state)
+    sold = sales_tools.advance_day(session_state)
 
     # Check sold quantities
     assert isinstance(sold, dict)
@@ -191,7 +191,7 @@ def test_recommend_prices_batch(sales_tools, session_state):
 def test_update_demand_params(sales_tools, session_state):
     """Test updating demand parameters based on sales observation."""
     # Simulate a day first
-    sold = sales_tools.simulate_day(session_state)
+    sold = sales_tools.advance_day(session_state)
     cola_sold = sold["cola"]
     
     # Advance day to simulate next observation
@@ -249,11 +249,11 @@ def test_category_diversity_penalty_cap():
 
     # k at optimal threshold (no penalty)
     state_opt = build_session_state(model.cfg.choice_optimal_options)
-    sold_opt = tools.simulate_day(state_opt)["cola"]
+    sold_opt = tools.advance_day(state_opt)["cola"]
 
     # k far beyond threshold -> penalty should cap at 50%
     state_many = build_session_state(60)
-    sold_many = tools.simulate_day(state_many)["cola"]
+    sold_many = tools.advance_day(state_many)["cola"]
 
     # Expect roughly 0.5x with small tolerance for rounding to int
     assert sold_opt > 0

@@ -6,12 +6,12 @@ from agno.tools.toolkit import Toolkit
 
 class TimerTools(Toolkit):
     """
-    Toolkit for managing time progression and daily life cycle in the Partjob-Bench simulation.
+    Toolkit for managing time progression and daily life cycle in the Partjob-Bench workflow.
     Implements the core game loop mechanic: advancing to the next day.
     
     This toolkit handles:
     1. Resource Recovery: Restoring Energy and reducing Stress upon sleeping.
-    2. Economic Simulation: Deducting daily living costs automatically.
+    2. Economic Update: Deducting daily living costs automatically.
     3. Task Maintenance: Resetting daily counters and removing expired tasks from the pool.
     4. Game State Monitoring: Checks for bankruptcy (Money < 0) or time limit (Max Days) to trigger Game Over.
     """
@@ -67,7 +67,7 @@ class TimerTools(Toolkit):
             return json.dumps({
                 "status": "game_over",
                 "reason": "max_days_reached",
-                "message": f"Simulation ended. You reached Day {current_day}."
+                "message": f"Run ended. You reached Day {current_day}."
             }, ensure_ascii=False)
 
         current_money = float(session_state.get("money", 0.0))

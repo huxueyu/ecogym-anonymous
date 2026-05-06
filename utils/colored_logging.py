@@ -36,7 +36,6 @@ class ColoredFormatter(logging.Formatter):
         '[Auto-call task_done]': Fore.YELLOW,
         'Session ID': Fore.CYAN + Style.BRIGHT,
         'Resuming': Fore.YELLOW + Style.BRIGHT,
-        'Starting simulation': Fore.GREEN + Style.BRIGHT,
         '✅': Fore.GREEN + Style.BRIGHT,
         '❌': Fore.RED + Style.BRIGHT,
         'Agent System Prompt': Fore.MAGENTA + Style.BRIGHT,
